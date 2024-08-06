@@ -1,0 +1,15 @@
+streamlit == 1.36.0
+ultralytics-thop == 2.0.0
+
+opencv-python~=4.10.0.84
+numpy~=1.26.4
+ultralytics~=8.2.62
+
+Pillow>=7.1.2
+PyYAML>=5.3.1
+requests>=2.23.0
+scipy>=1.4.1  # Google Colab version
+torch>=1.7.0
+torchvision>=0.8.1
+tqdm>=4.41.0
+opencv-python-headless
