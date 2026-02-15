@@ -1,4 +1,6 @@
 streamlit
-onnxruntime
-numpy
+ultralytics
+torch
+torchvision
 pillow
+numpy
