@@ -1,5 +1,5 @@
 import streamlit as st
-import onnxruntime as ort
+from ultralytics import YOLO
 from PIL import Image
 import numpy as np
 
@@ -10,12 +10,12 @@ st.set_page_config(
     initial_sidebar_state='auto'
 )
 
-# ✅ ONNX 모델 로드
+# ✅ 모델은 한 번만 로드
 @st.cache_resource
 def load_model():
-    return ort.InferenceSession("model/best.onnx")
+    return YOLO("model/best.pt")
 
-session = load_model()
+model = load_model()
 
 st.subheader('재활용품 분류기')
 
@@ -25,6 +25,7 @@ with st.container(border=False):
 
 st.write('')
 tab1, tab2 = st.tabs(['이미지 업로드', '사진 촬영'])
+
 
 # -----------------------------------
 # 라벨 정의
@@ -41,51 +42,35 @@ labels = {
     8: "페트+이물질+다중포장재"
 }
 
-# -----------------------------------
-# 예측 함수
-# -----------------------------------
-def predict(image):
-    img = image.resize((640, 640))
-    img = np.array(img) / 255.0
-    img = img.transpose(2, 0, 1)
-    img = np.expand_dims(img, axis=0).astype(np.float32)
-
-    input_name = session.get_inputs()[0].name
-    outputs = session.run(None, {input_name: img})
-
-    return outputs
 
 # -----------------------------------
-# 결과 표시 함수
+# 결과 출력 함수
 # -----------------------------------
-def show_results(image):
-    outputs = predict(image)
+def show_results(results):
+    result = results[0]
 
-    st.image(image, caption="입력 이미지", use_container_width=True)
+    # 박스 그려진 이미지 표시
+    annotated_image = result.plot()
+    st.image(annotated_image, caption="재활용 분류 결과", use_container_width=True)
 
-    predictions = outputs[0][0]  # (13, 8400)
-
-    # confidence 값 기준으로 최고값 찾기
-    confidences = predictions[4]
-    best_idx = np.argmax(confidences)
-    best_conf = confidences[best_idx]
-
-    if best_conf < 0.5:
+    if result.boxes is None or len(result.boxes) == 0:
         st.warning("인식된 객체가 없습니다.")
         return
 
-    class_scores = predictions[5:, best_idx]
-    best_class = np.argmax(class_scores)
-
-    label = labels.get(int(best_class), "알 수 없음")
-    conf_percent = round(float(best_conf) * 100, 2)
+    classes = result.boxes.cls.tolist()
+    confidences = result.boxes.conf.tolist()
 
     st.divider()
     st.subheader('인식 결과')
-    st.write(f"{label} (약 {conf_percent} %)")
+
+    for i, cls in enumerate(classes):
+        conf_percent = round(confidences[i] * 100, 2)
+        label = labels.get(int(cls), "알 수 없음")
+        st.write(f"{i+1}. {label} (약 {conf_percent} %)")
 
     st.divider()
     st.info("※ 인식 결과는 실제와 차이가 있을 수 있습니다.")
+
 
 # -----------------------------------
 # 이미지 업로드
@@ -95,7 +80,11 @@ with tab1:
 
     if uploaded_file is not None:
         image = Image.open(uploaded_file).convert("RGB")
-        show_results(image)
+        st.image(image, caption="업로드 이미지", use_container_width=True)
+
+        results = model.predict(image, conf=0.5)
+        show_results(results)
+
 
 # -----------------------------------
 # 사진 촬영
@@ -105,7 +94,11 @@ with tab2:
 
     if picture:
         image = Image.open(picture).convert("RGB")
-        show_results(image)
+        st.image(image, caption="촬영 이미지", use_container_width=True)
+
+        results = model.predict(image, conf=0.5)
+        show_results(results)
+
 
 # -----------------------------------
 # 하단 안내
