@@ -51,7 +51,7 @@ def show_results(results):
 
     # 박스 그려진 이미지 표시
     annotated_image = result.plot()
-    st.image(annotated_image, caption="재활용 분류 결과", use_container_width=True)
+    st.image(annotated_image, caption="재활용 분류 결과")
 
     if result.boxes is None or len(result.boxes) == 0:
         st.warning("인식된 객체가 없습니다.")
@@ -80,7 +80,7 @@ with tab1:
 
     if uploaded_file is not None:
         image = Image.open(uploaded_file).convert("RGB")
-        st.image(image, caption="업로드 이미지", use_container_width=True)
+        st.image(image, caption="업로드 이미지")
 
         results = model.predict(image, conf=0.5)
         show_results(results)
@@ -94,7 +94,7 @@ with tab2:
 
     if picture:
         image = Image.open(picture).convert("RGB")
-        st.image(image, caption="촬영 이미지", use_container_width=True)
+        st.image(image, caption="촬영 이미지")
 
         results = model.predict(image, conf=0.5)
         show_results(results)
