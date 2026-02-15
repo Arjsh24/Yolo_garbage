@@ -1,6 +1,4 @@
 streamlit
-ultralytics>=8.3.0
-torch>=2.8.0
-torchvision>=0.21.0
-pillow
+onnxruntime
 numpy
+pillow
